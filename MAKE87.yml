@@ -1,0 +1,7 @@
+build_kit:
+  name: file://docker/main/Dockerfile
+  version: latest
+port_requirements:
+  - name: log-ws
+    protocol: TCP
+    target_port: 8971
