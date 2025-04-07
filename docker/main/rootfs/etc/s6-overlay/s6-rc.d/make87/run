@@ -1,23 +1,9 @@
 #!/command/with-contenv bash
-# shellcheck shell=bash
-# Start the Frigate service
+set -euo pipefail
 
-set -o errexit -o nounset -o pipefail
+cd /opt/frigate || {
+  echo "[ERROR] Failed to change working directory to /opt/frigate"
+  exit 1
+}
 
-# Logs should be sent to stdout so that s6 can collect them
-
-# Tell S6-Overlay not to restart this service
-s6-svc -O .
-
-# Start watcher in background
-inotifywait -m -e modify /tmp/frigate/config.yaml |
-while read -r _; do
-  echo "[INFO] Detected config.yaml change, restarting frigate..."
-  s6-rc -a change frigate
-done &
-
-cd /opt/frigate || echo "[ERROR] Failed to change working directory to /opt/frigate"
-
-# Replace the bash process with the Frigate process, redirecting stderr to stdout
-exec 2>&1
 exec python3 -u -m make87_app
