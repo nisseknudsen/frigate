@@ -1,2 +1,3 @@
-scikit-build == 0.17.*
-nvidia-pyindex
+make87
+make87_messages
+pyyaml>=6.0.2,<7.0
