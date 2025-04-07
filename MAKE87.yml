@@ -1,7 +1,18 @@
 build_kit:
   name: file://docker/main/Dockerfile
   version: latest
+provider_endpoints:
+  - name: RTSP_RECORDING_JOB
+    requester_message_type: make87_messages.transport.rtsp.RTSPRequest
+    provider_message_type: make87_messages.primitive.bool.Bool
 port_requirements:
   - name: log-ws
     protocol: TCP
     target_port: 8971
+volume_requirements:
+  - mount_path: /media/frigate
+    source: make87_frigate_storage
+  - mount_path: /config
+    source: make87_frigate_config
+  - mount_path: /etc/localtime
+    source: /etc/localtime
