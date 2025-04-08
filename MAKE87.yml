@@ -3,7 +3,7 @@ build_kit:
   version: latest
   target_architectures: [amd64]
 provider_endpoints:
-  - name: RTSP_RECORDING_JOB
+  - name: RTSP_STREAM
     requester_message_type: make87_messages.transport.rtsp.RTSPRequest
     provider_message_type: make87_messages.primitive.bool.Bool
 port_requirements:
@@ -12,8 +12,8 @@ port_requirements:
     target_port: 8971
 volume_requirements:
   - mount_path: /media/frigate
-    source: make87_frigate_storage
+    source: frigate_storage
   - mount_path: /config
-    source: make87_frigate_config
+    source: frigate_config
   - mount_path: /etc/localtime
     source: /etc/localtime

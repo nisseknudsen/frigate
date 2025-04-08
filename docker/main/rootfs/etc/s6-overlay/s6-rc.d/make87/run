@@ -6,4 +6,13 @@ cd /opt/frigate || {
   exit 1
 }
 
+CONFIG_FILE="/config/config.yaml"
+TEMPLATE_FILE="config_template/config.yaml"
+
+# Copy template if config doesn't exist
+if [ ! -f "$CONFIG_FILE" ]; then
+  echo "[INFO] No config.yaml found, copying template..."
+  cp "$TEMPLATE_FILE" "$CONFIG_FILE"
+fi
+
 exec python3 -u -m make87_app

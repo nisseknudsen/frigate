@@ -10,5 +10,7 @@ RUN rm /requirements.txt
 
 WORKDIR /opt/frigate/
 COPY make87_app make87_app/
+COPY docker/main/config/ config_template/
 
 COPY docker/main/rootfs/ /
+
