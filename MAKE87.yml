@@ -7,7 +7,7 @@ provider_endpoints:
     requester_message_type: make87_messages.transport.rtsp.RTSPRequest
     provider_message_type: make87_messages.primitive.bool.Bool
 port_requirements:
-  - name: log-ws
+  - name: auth_api
     protocol: TCP
     target_port: 8971
 volume_requirements:
