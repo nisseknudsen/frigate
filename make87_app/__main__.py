@@ -13,6 +13,9 @@ from make87_messages.primitive.bool_pb2 import Bool
 
 import make87
 
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+
 FRIGATE_CONFIG_PATH = "/config/config.yaml"
 RESTART_DELAY = 5  # seconds
 _restart_timer: Optional[threading.Timer] = None
@@ -41,12 +44,12 @@ def insert_credentials(url: str, username: str, password: str) -> str:
 
 def trigger_frigate_restart():
     try:
-        logging.info("[Frigate] Restart timer expired, calling restart endpoint...")
+        logger.info("[Frigate] Restart timer expired, calling restart endpoint...")
         response = requests.post("http://localhost:5000/api/restart", json={})
         response.raise_for_status()
-        logging.info("[Frigate] Restart request successful")
+        logger.info("[Frigate] Restart request successful")
     except Exception as e:
-        logging.error(f"[Frigate] Failed to restart Frigate: {e}")
+        logger.error(f"[Frigate] Failed to restart Frigate: {e}")
 
 
 def schedule_restart():
@@ -56,7 +59,7 @@ def schedule_restart():
             _restart_timer.cancel()
         _restart_timer = threading.Timer(RESTART_DELAY, trigger_frigate_restart)
         _restart_timer.start()
-        logging.info(f"[Frigate] Restart scheduled in {RESTART_DELAY} seconds...")
+        logger.info(f"[Frigate] Restart scheduled in {RESTART_DELAY} seconds...")
 
 
 def update_frigate_config(
@@ -65,40 +68,30 @@ def update_frigate_config(
     """
     Update config.yaml and return True if it was a new camera or a changed config.
     """
-    if os.path.exists(FRIGATE_CONFIG_PATH):
-        with open(FRIGATE_CONFIG_PATH, "r") as f:
-            config = yaml.safe_load(f)
-    else:
-        config = {
-            "mqtt": {"enabled": False},
-            "tls": {"enabled": False},
-            "auth": {"reset_admin_password": True},
-            "cameras": {},
-        }
+    with open(FRIGATE_CONFIG_PATH, "r") as f:
+        config = yaml.safe_load(f)
 
     if "cameras" not in config:
         config["cameras"] = {}
+
+    if name in config["cameras"]:
+        return False  # no change
 
     camera_config = {
         "enabled": True,
         "ffmpeg": {"inputs": [{"path": rtsp_url, "roles": ["record"]}]},
         "detect": {"enabled": False},
-        "record": {"enabled": True, "retain": {"days": 1}},
+        "record": {"enabled": True, "retain": {"days": 3}},
     }
 
     if onvif_user and onvif_pass:
         camera_config["onvif"] = {"host": ip, "port": 8000, "user": onvif_user, "password": onvif_pass}
 
-    # Determine if the camera config is new or changed
-    if config["cameras"].get(name) == camera_config:
-        return False  # no change
-
     config["cameras"][name] = camera_config
-
     with open(FRIGATE_CONFIG_PATH, "w") as f:
         yaml.safe_dump(config, f, sort_keys=False)
 
-    logging.info(f"[Frigate] Updated config.yaml with camera: {name}")
+    logger.info(f"[Frigate] Updated config.yaml with camera: {name}")
     return True
 
 
