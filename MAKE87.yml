@@ -1,7 +1,6 @@
 build_kit:
   name: file://docker/main/Dockerfile
   version: latest
-  target_architectures: [amd64]
 provider_endpoints:
   - name: RTSP_STREAM
     requester_message_type: make87_messages.transport.rtsp.RTSPRequest
