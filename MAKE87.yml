@@ -1,6 +1,7 @@
 build_kit:
   name: file://docker/main/Dockerfile
   version: latest
+  target_architectures: ["amd64"]
 provider_endpoints:
   - name: RTSP_STREAM
     requester_message_type: make87_messages.transport.rtsp.RTSPRequest
@@ -16,3 +17,12 @@ volume_requirements:
     source: frigate_config
   - mount_path: /etc/localtime
     source: /etc/localtime
+peripheral_requirements:
+  - name: RENDER
+    peripheral_type: GenericDevice
+    constraints:
+      type: GenericDevice
+      path_prefix: "/dev/dri/renderD"
+      path_suffix: null
+      contains: null
+      contains_not: null

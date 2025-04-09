@@ -79,7 +79,7 @@ def update_frigate_config(
 
     camera_config = {
         "enabled": True,
-        "ffmpeg": {"inputs": [{"path": rtsp_url, "roles": ["record"]}]},
+        "ffmpeg": {"hwaccel_args": "preset-vaapi", "inputs": [{"path": rtsp_url, "roles": ["record"]}]},
         "detect": {"enabled": False},
         "record": {"enabled": True, "retain": {"days": 3}},
     }

@@ -8,6 +8,7 @@ cameras:
   dummy_camera: # <--- this will be changed to your actual camera later
       enabled: false
       ffmpeg:
+        hwaccel_args: preset-vaapi
         inputs:
           - path: rtsp://127.0.0.1:554/rtsp
             roles:
