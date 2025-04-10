@@ -16,3 +16,6 @@ volume_requirements:
     source: frigate_config
   - mount_path: /etc/localtime
     source: /etc/localtime
+peripheral_requirements:
+  - name: GPU
+    peripheral_type: GPU
