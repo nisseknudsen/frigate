@@ -1,15 +1,16 @@
 build_kit:
   name: file://docker/main/Dockerfile
   version: latest
-  target_architectures: ["amd64"]
+  target_architectures: ["amd64", "arm64"]
 provider_endpoints:
   - name: RTSP_STREAM
     requester_message_type: make87_messages.transport.rtsp.RTSPRequest
     provider_message_type: make87_messages.primitive.bool.Bool
 port_requirements:
-  - name: auth_api
-    protocol: TCP
+  - name: Frigate
+    protocol: HTTP
     target_port: 8971
+    is_system_interface: true
 volume_requirements:
   - mount_path: /media/frigate
     source: frigate_storage

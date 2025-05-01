@@ -1,6 +1,6 @@
 ARG DEBIAN_FRONTEND=noninteractive
 
-ARG BASE_IMAGE=ghcr.io/blakeblackshear/frigate:0.15.0-tensorrt
+ARG BASE_IMAGE=ghcr.io/blakeblackshear/frigate:0.15.1-tensorrt
 
 FROM ${BASE_IMAGE} AS frigate
 
