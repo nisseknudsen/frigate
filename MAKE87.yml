@@ -7,9 +7,10 @@ provider_endpoints:
     requester_message_type: make87_messages.transport.rtsp.RTSPRequest
     provider_message_type: make87_messages.primitive.bool.Bool
 port_requirements:
-  - name: auth_api
-    protocol: TCP
+  - name: Frigate
+    protocol: HTTP
     target_port: 8971
+    is_system_interface: true
 volume_requirements:
   - mount_path: /media/frigate
     source: frigate_storage
