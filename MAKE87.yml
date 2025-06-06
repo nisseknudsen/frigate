@@ -36,7 +36,7 @@ container_config:
     - frigate_config:/config:rw
     - /etc/localtime:/etc/localtime:ro
 build:
-  build_kit:
-    name: file://docker/main/Dockerfile
+  custom:
+    dockerfile: docker/main/Dockerfile
     platforms: ["linux/amd64"]
 
