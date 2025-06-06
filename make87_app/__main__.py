@@ -82,10 +82,10 @@ def main():
     mediamtx_api_url = f"http://{mediamtx_api_client.vpn_ip}:{mediamtx_api_client.vpn_port}"
 
     # Use mediamtx_rtsp for RTSP URL construction
-    mediamtx_rtsp_interface: InterfaceConfig = application_config.interfaces.get("mediamtx_rtsp")
-    mediamtx_rtsp_client: BoundClient = mediamtx_rtsp_interface.clients.get("mediamtx_rtsp")
-    rtsp_host = mediamtx_rtsp_client.vpn_ip
-    rtsp_port = mediamtx_rtsp_client.vpn_port
+    rtsp_interface: InterfaceConfig = application_config.interfaces.get("rtsp_connection")
+    rtsp_client: BoundClient = rtsp_interface.clients.get("rtsp_connection")
+    rtsp_host = rtsp_client.vpn_ip
+    rtsp_port = rtsp_client.vpn_port
 
     last_camera_dict = None
 
