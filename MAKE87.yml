@@ -1,19 +1,23 @@
 version: 1
 interfaces:
-  - name: frigate_web
+  - name: frigate
     protocol: http
     servers:
-      - name: frigate_web_client
+      - name: frigate_web
         spec:
-          string: frigate:15.1  # copy of OpenAPI spec in schema/swagger.json
+          string: frigate:15.1
         port: 8971
         is_system_interface: true
+      - name: frigate_api
+        spec:
+          string: frigate_api:15.1
+        port: 5000
   - name: mediamtx_http
     protocol: http
     clients:
       - name: mediamtx_api
         spec:
-          string: mediamtx_api:1.0  # copy of OpenAPI spec in schema/swagger.json
+          string: mediamtx_api:1.0  # copy of OpenAPI spec in schema/mediamtx/swagger.json
 peripheral_requirements:
   - name: RENDER
     peripheral_type: GenericDevice
