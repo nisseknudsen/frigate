@@ -24,6 +24,12 @@ interfaces:
       - name: mediamtx_api
         spec:
           string: mediamtx_api:1.0  # copy of OpenAPI spec in schema/mediamtx/swagger.json
+  - name: rtsp_connection
+    protocol: rtsp
+    clients:
+      - name: rtsp_connection
+        spec:
+          string: rtsp  # no specific spec, just a placeholder for RTSP connections
 peripheral_requirements:
   - name: RENDER
     peripheral_type: GenericDevice

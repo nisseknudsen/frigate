@@ -55,19 +55,15 @@ def write_frigate_config(config):
         yaml.safe_dump(config, f, sort_keys=False)
 
 
-def paths_to_camera_dict(paths, mediamtx_api_url):
+def paths_to_camera_dict(paths, rtsp_host, rtsp_port):
     """
     Convert mediamtx paths to a dict keyed by camera name.
-    Use mediamtx_api_url to extract IP and port for RTSP URL construction.
+    Use provided RTSP host and port for RTSP URL construction.
     """
-    parsed = urlparse(mediamtx_api_url)
-    host = parsed.hostname
-    port = parsed.port or 554  # Default RTSP port if not specified
-
     cameras = {}
     for path in paths:
         name = path.get("name")
-        rtsp_url = f"rtsp://{host}:{port}/{name}"
+        rtsp_url = f"rtsp://{rtsp_host}:{rtsp_port}/{name}"
         cameras[name] = {
             "enabled": True,
             "ffmpeg": {"hwaccel_args": "preset-vaapi", "inputs": [{"path": rtsp_url, "roles": ["record"]}]},
@@ -80,17 +76,23 @@ def paths_to_camera_dict(paths, mediamtx_api_url):
 def main():
     application_config = make87.config.load_config_from_env()
 
-    mediamtx_interface: InterfaceConfig = application_config.interfaces.get("mediamtx_http")
-    mediamtx_api_client: BoundClient = mediamtx_interface.clients.get("mediamtx_api")
-
+    # Use mediamtx_api for HTTP REST API access
+    mediamtx_http_interface: InterfaceConfig = application_config.interfaces.get("mediamtx_http")
+    mediamtx_api_client: BoundClient = mediamtx_http_interface.clients.get("mediamtx_api")
     mediamtx_api_url = f"http://{mediamtx_api_client.vpn_ip}:{mediamtx_api_client.vpn_port}"
+
+    # Use mediamtx_rtsp for RTSP URL construction
+    mediamtx_rtsp_interface: InterfaceConfig = application_config.interfaces.get("mediamtx_rtsp")
+    mediamtx_rtsp_client: BoundClient = mediamtx_rtsp_interface.clients.get("mediamtx_rtsp")
+    rtsp_host = mediamtx_rtsp_client.vpn_ip
+    rtsp_port = mediamtx_rtsp_client.vpn_port
 
     last_camera_dict = None
 
     while True:
         try:
             mediamtx_paths = fetch_all_paths(mediamtx_api_url)
-            new_camera_dict = paths_to_camera_dict(mediamtx_paths, mediamtx_api_url)
+            new_camera_dict = paths_to_camera_dict(mediamtx_paths, rtsp_host, rtsp_port)
 
             config = load_frigate_config()
             config_cameras = config.get("cameras", {})
