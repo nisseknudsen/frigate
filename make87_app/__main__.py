@@ -1,8 +1,9 @@
-import os
 import logging
 import threading
 import requests
-from typing import Optional
+from typing import Optional, Dict
+import time
+import copy
 
 import yaml
 from urllib.parse import urlparse, urlunparse, urlencode
@@ -12,34 +13,12 @@ from make87_messages.transport.rtsp_pb2 import RTSPRequest
 from make87_messages.primitive.bool_pb2 import Bool
 
 import make87
+from make87.models import InterfaceConfig, BoundClient
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
 
 FRIGATE_CONFIG_PATH = "/config/config.yaml"
-RESTART_DELAY = 5  # seconds
-_restart_timer: Optional[threading.Timer] = None
-_restart_lock = threading.Lock()
-
-
-def build_url(endpoint) -> str:
-    protocol = endpoint.protocol
-    host = endpoint.host
-    port = endpoint.port
-    path = endpoint.path
-    if not path.startswith("/"):
-        path = "/" + path
-    query = urlencode(endpoint.query_params) if endpoint.query_params else ""
-    netloc = f"{host}:{port}" if port else host
-    return str(urlunparse((protocol, netloc, path, "", query, "")))
-
-
-def insert_credentials(url: str, username: str, password: str) -> str:
-    parsed = urlparse(url)
-    netloc = f"{username}:{password}@{parsed.hostname}"
-    if parsed.port:
-        netloc += f":{parsed.port}"
-    return str(urlunparse(parsed._replace(netloc=netloc)))
+POLL_INTERVAL = 10  # seconds
 
 
 def trigger_frigate_restart():
@@ -52,83 +31,99 @@ def trigger_frigate_restart():
         logger.error(f"[Frigate] Failed to restart Frigate: {e}")
 
 
-def schedule_restart():
-    global _restart_timer
-    with _restart_lock:
-        if _restart_timer:
-            _restart_timer.cancel()
-        _restart_timer = threading.Timer(RESTART_DELAY, trigger_frigate_restart)
-        _restart_timer.start()
-        logger.info(f"[Frigate] Restart scheduled in {RESTART_DELAY} seconds...")
+def fetch_all_paths(base_url: str, items_per_page: int = 100, headers: Optional[Dict] = None):
+    all_paths = []
+    page = 0
+
+    while True:
+        resp = requests.get(
+            f"{base_url}/v3/paths/list", params={"page": page, "itemsPerPage": items_per_page}, headers=headers or {}
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        all_paths.extend(data.get("items", []))
+
+        if page + 1 >= data.get("pageCount", 0):
+            break
+        page += 1
+
+    return all_paths
 
 
-def update_frigate_config(
-    name: str, rtsp_url: str, onvif_user: Optional[str], onvif_pass: Optional[str], ip: str
-) -> bool:
-    """
-    Update config.yaml and return True if it was a new camera or a changed config.
-    """
+def load_frigate_config():
     with open(FRIGATE_CONFIG_PATH, "r") as f:
-        config = yaml.safe_load(f)
+        return yaml.safe_load(f)
 
-    if "cameras" not in config:
-        config["cameras"] = {}
 
-    if name in config["cameras"]:
-        return False  # no change
-
-    camera_config = {
-        "enabled": True,
-        "ffmpeg": {"hwaccel_args": "preset-vaapi", "inputs": [{"path": rtsp_url, "roles": ["record"]}]},
-        "detect": {"enabled": False},
-        "record": {"enabled": True, "retain": {"days": 3}},
-    }
-
-    if onvif_user and onvif_pass:
-        camera_config["onvif"] = {"host": ip, "port": 8000, "user": onvif_user, "password": onvif_pass}
-
-    config["cameras"][name] = camera_config
+def write_frigate_config(config):
     with open(FRIGATE_CONFIG_PATH, "w") as f:
         yaml.safe_dump(config, f, sort_keys=False)
 
-    logger.info(f"[Frigate] Updated config.yaml with camera: {name}")
-    return True
+
+def paths_to_camera_dict(paths, mediamtx_api_url):
+    """
+    Convert mediamtx paths to a dict keyed by camera name.
+    Use mediamtx_api_url to extract IP and port for RTSP URL construction.
+    """
+    parsed = urlparse(mediamtx_api_url)
+    host = parsed.hostname
+    port = parsed.port or 554  # Default RTSP port if not specified
+
+    cameras = {}
+    for path in paths:
+        name = path.get("name")
+        rtsp_url = f"rtsp://{host}:{port}/{name}"
+        cameras[name] = {
+            "enabled": True,
+            "ffmpeg": {"hwaccel_args": "preset-vaapi", "inputs": [{"path": rtsp_url, "roles": ["record"]}]},
+            "detect": {"enabled": False},
+            "record": {"enabled": True, "retain": {"days": 7}},
+        }
+    return cameras
 
 
 def main():
-    make87.initialize()
+    application_config = make87.config.load_config_from_env()
 
-    provider = make87.get_provider(name="RTSP_STREAM", requester_message_type=RTSPRequest, provider_message_type=Bool)
+    mediamtx_interface: InterfaceConfig = application_config.interfaces.get("mediamtx_http")
+    mediamtx_api_client: BoundClient = mediamtx_interface.clients.get("mediamtx_api")
 
-    def callback(message: RTSPRequest) -> Bool:
-        url = build_url(message.endpoint)
-        ip = message.endpoint.host
-        username = password = None
+    mediamtx_api_url = f"http://{mediamtx_api_client.vpn_ip}:{mediamtx_api_client.vpn_port}"
 
-        if message.HasField("basic_auth"):
-            username = message.basic_auth.username
-            password = message.basic_auth.password
-            url = insert_credentials(url, username, password)
-        elif message.HasField("digest_auth"):
-            username = message.digest_auth.username
-            password = message.digest_auth.password
-            url = insert_credentials(url, username, password)
+    last_camera_dict = None
 
-        path_suffix = message.endpoint.path.lstrip("/").replace("/", "_") or "camera"
-        camera_name = f"{ip.replace('.', '_')}_{path_suffix}"
+    while True:
+        try:
+            mediamtx_paths = fetch_all_paths(mediamtx_api_url)
+            new_camera_dict = paths_to_camera_dict(mediamtx_paths, mediamtx_api_url)
 
-        changed = update_frigate_config(camera_name, url, username, password, ip)
+            config = load_frigate_config()
+            config_cameras = config.get("cameras", {})
 
-        if changed:
-            schedule_restart()
+            # Compare current config cameras with new_camera_dict
+            if last_camera_dict is not None and new_camera_dict == last_camera_dict:
+                # No change, sleep and continue
+                time.sleep(POLL_INTERVAL)
+                continue
 
-        return Bool(
-            header=make87.header_from_message(Header, message=message, append_entity_path="config_written"),
-            value=True,
-        )
+            if new_camera_dict == config_cameras:
+                last_camera_dict = copy.deepcopy(new_camera_dict)
+                time.sleep(POLL_INTERVAL)
+                continue
 
-    provider.provide(callback)
-    make87.loop()
+            # Update config
+            config["cameras"] = new_camera_dict
+            write_frigate_config(config)
+            logger.info("[Frigate] Cameras changed, config updated.")
+
+            # Trigger Frigate restart
+            trigger_frigate_restart()
+
+            last_camera_dict = copy.deepcopy(new_camera_dict)
+        except Exception as e:
+            logger.error(f"[Frigate] Error in main loop: {e}")
+
+        time.sleep(POLL_INTERVAL)
 
 
 if __name__ == "__main__":
