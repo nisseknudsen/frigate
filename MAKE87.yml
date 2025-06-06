@@ -6,12 +6,18 @@ interfaces:
       - name: frigate_web
         spec:
           string: frigate:15.1
-        port: 8971
-        is_system_interface: true
+        port:
+          name: frigate_web
+          protocol: HTTP
+          target_port: 8971
+          is_system_interface: true
       - name: frigate_api
         spec:
           string: frigate_api:15.1
-        port: 5000
+        port:
+          name: frigate_web
+          protocol: HTTP
+          target_port: 5000
   - name: mediamtx_http
     protocol: http
     clients:
