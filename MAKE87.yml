@@ -15,7 +15,7 @@ interfaces:
         spec:
           string: frigate_api:15.1
         port:
-          name: frigate_web
+          name: frigate_api
           protocol: HTTP
           target_port: 5000
   - name: mediamtx_http
