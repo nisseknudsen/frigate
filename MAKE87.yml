@@ -1,29 +1,32 @@
-build_kit:
-  name: file://docker/main/Dockerfile
-  version: latest
-  target_architectures: ["amd64"]
-provider_endpoints:
-  - name: RTSP_STREAM
-    requester_message_type: make87_messages.transport.rtsp.RTSPRequest
-    provider_message_type: make87_messages.primitive.bool.Bool
-port_requirements:
-  - name: Frigate
-    protocol: HTTP
-    target_port: 8971
-    is_system_interface: true
-volume_requirements:
-  - mount_path: /media/frigate
-    source: frigate_storage
-  - mount_path: /config
-    source: frigate_config
-  - mount_path: /etc/localtime
-    source: /etc/localtime
+version: 1
+interfaces:
+  - name: frigate_web
+    protocol: http
+    servers:
+      - name: frigate_web_client
+        spec:
+          string: frigate:15.1  # copy of OpenAPI spec in schema/swagger.json
+        port: 8971
+        is_system_interface: true
+  - name: mediamtx_http
+    protocol: http
+    clients:
+      - name: mediamtx_api
+        spec:
+          string: mediamtx_api:1.0  # copy of OpenAPI spec in schema/swagger.json
 peripheral_requirements:
   - name: RENDER
     peripheral_type: GenericDevice
     constraints:
       type: GenericDevice
       path_prefix: "/dev/dri/renderD"
-      path_suffix: null
-      contains: null
-      contains_not: null
+container_config:
+  volumes:
+    - frigate_storage:/media/frigate:rw
+    - frigate_config:/config:rw
+    - /etc/localtime:/etc/localtime:ro
+build:
+  build_kit:
+    name: file://docker/main/Dockerfile
+    platforms: ["linux/amd64"]
+

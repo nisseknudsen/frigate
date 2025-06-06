@@ -1,3 +1,3 @@
-make87
-make87_messages
+make87>=0.1.0.dev2
+make87_messages>=0.2.6
 pyyaml>=6.0.2,<7.0
