@@ -1,16 +1,11 @@
 import logging
-import threading
 import requests
 from typing import Optional, Dict
 import time
 import copy
 
 import yaml
-from urllib.parse import urlparse, urlunparse, urlencode
-
-from make87_messages.core.header_pb2 import Header
-from make87_messages.transport.rtsp_pb2 import RTSPRequest
-from make87_messages.primitive.bool_pb2 import Bool
+from urllib.parse import urlparse
 
 import make87
 from make87.models import InterfaceConfig, BoundClient
