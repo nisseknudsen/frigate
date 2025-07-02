@@ -61,21 +61,12 @@ def cameras_env_to_frigate_dict_and_restream(cameras_env):
         # If main and sub path are the same, only create one go2rtc stream and one ffmpeg input with both roles
         if sub_path == path:
             restream[name] = [rtsp_url]
-            ffmpeg_inputs.append({
-                "path": f"rtsp://localhost:8554/{name}",
-                "roles": ["record", "detect"]
-            })
+            ffmpeg_inputs.append({"path": f"rtsp://localhost:8554/{name}", "roles": ["record", "detect"]})
         else:
             restream[name] = [rtsp_url]
             restream[f"{name}_sub"] = [rtsp_url_sub]
-            ffmpeg_inputs.append({
-                "path": f"rtsp://localhost:8554/{name}",
-                "roles": ["record"]
-            })
-            ffmpeg_inputs.append({
-                "path": f"rtsp://localhost:8554/{name}_sub",
-                "roles": ["detect"]
-            })
+            ffmpeg_inputs.append({"path": f"rtsp://localhost:8554/{name}", "roles": ["record"]})
+            ffmpeg_inputs.append({"path": f"rtsp://localhost:8554/{name}_sub", "roles": ["detect"]})
 
         cameras[name] = {
             "enabled": True,
