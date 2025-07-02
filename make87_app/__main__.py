@@ -60,20 +60,22 @@ def cameras_env_to_frigate_dict(cameras_env):
 def main():
     application_config = make87.config.load_config_from_env()
 
-    while True:
-        try:
-            cameras_env = application_config.config.get("cameras", [])
-            new_camera_dict = cameras_env_to_frigate_dict(cameras_env)
+    try:
+        cameras_env = application_config.config.get("cameras", [])
+        new_camera_dict = cameras_env_to_frigate_dict(cameras_env)
 
+        try:        
             config = load_frigate_config()
+        except FileNotFoundError:
+            config = {}
 
-            # Update config
-            config["cameras"] = new_camera_dict
-            write_frigate_config(config)
-            logger.info("[Frigate] Cameras changed, config updated.")
-
-        except Exception as e:
-            logger.error(f"[Frigate] Error in main loop: {e}")
+        # Update config
+        config["cameras"] = new_camera_dict
+        write_frigate_config(config)
+        logger.info("[Frigate] Cameras changed, config updated.")
+    except Exception as e:
+        logger.error(f"[Frigate] Error in main loop: {e}")
+        raise Exception("There was a problem with configuring the cameras or writing the config.yaml.")
 
 
 if __name__ == "__main__":
