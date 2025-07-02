@@ -18,18 +18,58 @@ interfaces:
           name: frigate_api
           protocol: HTTP
           target_port: 5000
-  - name: mediamtx_http
-    protocol: http
-    clients:
-      - name: mediamtx_api
+      - name: mediamtx_api  # used to list all available cameras in mediamtx format
         spec:
-          string: mediamtx_api:1.0  # copy of OpenAPI spec in schema/mediamtx/swagger.json
-  - name: rtsp_connection
-    protocol: rtsp
-    clients:
-      - name: rtsp_connection
+          string: mediamtx_api:1.0  # copy of OpenAPI spec in schema/swagger.json
+        port:
+          name: mediamtx_api
+          protocol: HTTP
+          target_port: 9997
+      - name: restream_rtsp
         spec:
           string: rtsp  # no specific spec, just a placeholder for RTSP connections
+        port:
+          name: restream_rtsp
+          protocol: TCP
+          target_port: 8554
+config:
+  type: object
+  properties:
+    cameras:
+      type: array
+      items:
+        type: object
+        properties:
+          camera_name:
+            type: string
+            description: Optional label or ID for the camera (defaults to camera_ip if not set)
+          camera_ip:
+            type: string
+            description: IP address or hostname of the camera
+          camera_port:
+            type: integer
+            description: RTSP port of the camera
+            default: 554
+          camera_path:
+            type: string
+            description: RTSP URI path or suffix for the camera
+            default: "/"
+          camera_username:
+            type: string
+            description: Username for the camera (optional)
+            default: null
+          camera_password:
+            type: string
+            description: Password for the camera (optional, only if username is set)
+            default: null
+          onvif_port:
+            type: [integer, "null"]
+            description: Set to the ONVIF port of the camera if available, otherwise leave empty
+            default: null
+        required:
+          - camera_ip
+  required:
+    - cameras
 peripheral_requirements:
   - name: RENDER
     peripheral_type: GenericDevice
