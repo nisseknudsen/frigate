@@ -54,6 +54,10 @@ config:
             type: string
             description: RTSP URI path or suffix for the camera
             default: "/"
+          camera_sub_path:
+            type: [string, "null"]
+            description: RTSP URI path or suffix for the camera's substream (optional). If not set, the main stream will be used.
+            default: null
           camera_username:
             type: string
             description: Username for the camera (optional)

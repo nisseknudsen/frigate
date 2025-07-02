@@ -34,6 +34,7 @@ def cameras_env_to_frigate_dict(cameras_env):
         ip = cam["camera_ip"]
         port = cam.get("camera_port", 554)
         path = cam.get("camera_path", "/")
+        sub_path = cam.get("camera_sub_path", path)
         username = cam.get("camera_username")
         password = cam.get("camera_password")
         onvif_port = cam.get("onvif_port", None)
@@ -41,14 +42,23 @@ def cameras_env_to_frigate_dict(cameras_env):
         # Build RTSP URL
         if username and password:
             rtsp_url = f"rtsp://{username}:{password}@{ip}:{port}{path}"
+            rtsp_url_sub = f"rtsp://{username}:{password}@{ip}:{port}{sub_path}"
         elif username:
             rtsp_url = f"rtsp://{username}@{ip}:{port}{path}"
+            rtsp_url_sub = f"rtsp://{username}@{ip}:{port}{sub_path}"
         else:
             rtsp_url = f"rtsp://{ip}:{port}{path}"
+            rtsp_url_sub = f"rtsp://{ip}:{port}{sub_path}"
 
         cameras[name] = {
             "enabled": True,
-            "ffmpeg": {"hwaccel_args": "preset-vaapi", "inputs": [{"path": rtsp_url, "roles": ["record"]}]},
+            "ffmpeg": {
+                "hwaccel_args": "preset-vaapi",
+                "inputs": [
+                    {"path": rtsp_url, "roles": ["record"]},
+                    {"path": rtsp_url_sub, "roles": ["detect"]},
+                ],
+            },
             "detect": {"enabled": False},
             "record": {"enabled": True, "retain": {"days": 7}},
         }
