@@ -69,8 +69,8 @@ def cameras_env_to_frigate_dict_and_restream(cameras_env):
                 }
             )
         else:
-            restream[name] = [rtsp_url]
-            restream[f"{name}_sub"] = [rtsp_url_sub]
+            restream[name] = rtsp_url
+            restream[f"{name}_sub"] = rtsp_url_sub
             ffmpeg_inputs.append(
                 {"path": f"rtsp://localhost:8554/{name}", "input_args": "preset-rtsp-restream", "roles": ["record"]}
             )
@@ -99,20 +99,21 @@ def cameras_env_to_frigate_dict_and_restream(cameras_env):
 
 
 def main():
-    config = load_frigate_config()
-
-    application_config = make87.config.load_config_from_env()
-    cameras_env = application_config.config.get("cameras", [])
-    try:
-        new_camera_dict, restream_dict = cameras_env_to_frigate_dict_and_restream(cameras_env)
-        config["cameras"] = new_camera_dict
-        config["go2rtc"] = {}
-        config["go2rtc"]["streams"] = restream_dict
-        write_frigate_config(config)
-        logger.info("[Frigate] Cameras and restream config updated.")
-    except Exception as e:
-        logger.error(f"[Frigate] Error in main loop: {e}")
-        raise Exception("There was a problem with configuring the cameras or writing the config.yaml.")
+    ...
+    # config = load_frigate_config()
+    #
+    # application_config = make87.config.load_config_from_env()
+    # cameras_env = application_config.config.get("cameras", [])
+    # try:
+    #     new_camera_dict, restream_dict = cameras_env_to_frigate_dict_and_restream(cameras_env)
+    #     config["cameras"] = new_camera_dict
+    #     config["go2rtc"] = {}
+    #     config["go2rtc"]["streams"] = restream_dict
+    #     write_frigate_config(config)
+    #     logger.info("[Frigate] Cameras and restream config updated.")
+    # except Exception as e:
+    #     logger.error(f"[Frigate] Error in main loop: {e}")
+    #     raise Exception("There was a problem with configuring the cameras or writing the config.yaml.")
 
 
 if __name__ == "__main__":
