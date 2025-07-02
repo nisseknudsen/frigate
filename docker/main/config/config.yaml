@@ -4,14 +4,23 @@ tls:
   enabled: false
 auth:
   enabled: false
+go2rtc:
+  streams:
+    dummy_camera:
+      - rtsp://127.0.0.1:554/rtsp
+    dummy_camera_sub:
+     - rtsp://127.0.0.1:554/rtsp_sub
 cameras:
-  dummy_camera: # <--- this will be changed to your actual camera later
-      enabled: false
-      ffmpeg:
-        hwaccel_args: preset-vaapi
-        inputs:
-          - path: rtsp://127.0.0.1:554/rtsp
-            roles:
-              - detect
+  dummy_camera:
+    enabled: false
+    ffmpeg:
+      hwaccel_args: preset-vaapi
+      inputs:
+        - path: rtsp://localhost:8554/dummy_camera
+          roles:
+            - record
+        - path: rtsp://localhost:8554/dummy_camera_sub
+          roles:
+            - detect
 version: 0.15-1
 camera_groups: {}
