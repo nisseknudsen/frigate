@@ -64,13 +64,17 @@ def main():
         cameras_env = application_config.config.get("cameras", [])
         new_camera_dict = cameras_env_to_frigate_dict(cameras_env)
 
-        try:        
+        try:
             config = load_frigate_config()
         except FileNotFoundError:
             config = {}
 
         # Update config
         config["cameras"] = new_camera_dict
+
+        if "mqtt" not in config:
+            config["mqtt"] = {"enabled": False}
+
         write_frigate_config(config)
         logger.info("[Frigate] Cameras changed, config updated.")
     except Exception as e:
