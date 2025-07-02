@@ -1,5 +1,6 @@
 import logging
 import yaml
+import urllib.parse
 
 import make87
 
@@ -24,9 +25,10 @@ def write_frigate_config(config):
         yaml.safe_dump(config, f, sort_keys=False)
 
 
-def build_rtsp_url(ip, port, path, username=None, password=None):
+def build_rtsp_url(ip, port, path, username=None, password=None, encode_password=False):
     if username and password:
-        return f"rtsp://{username}:{password}@{ip}:{port}{path}"
+        pwd = urllib.parse.quote(password) if encode_password else password
+        return f"rtsp://{username}:{pwd}@{ip}:{port}{path}"
     elif username:
         return f"rtsp://{username}@{ip}:{port}{path}"
     else:
@@ -51,9 +53,9 @@ def cameras_env_to_frigate_dict_and_restream(cameras_env):
         password = cam.get("camera_password")
         onvif_port = cam.get("onvif_port", None)
 
-        # Build RTSP URLs
-        rtsp_url = build_rtsp_url(ip, port, path, username, password)
-        rtsp_url_sub = build_rtsp_url(ip, port, sub_path, username, password)
+        # Build RTSP URLs (URL encode password for go2rtc streams)
+        rtsp_url = build_rtsp_url(ip, port, path, username, password, encode_password=True)
+        rtsp_url_sub = build_rtsp_url(ip, port, sub_path, username, password, encode_password=True)
 
         # Add to restream config
         restream[name] = [rtsp_url]
