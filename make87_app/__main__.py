@@ -28,11 +28,11 @@ def write_frigate_config(config):
 def build_rtsp_url(ip, port, path, username=None, password=None, encode_password=False):
     if username and password:
         pwd = urllib.parse.quote(password) if encode_password else password
-        return f"rtsp://{username}:{pwd}@{ip}:{port}{path}"
+        return f"ffmpeg:rtsp://{username}:{pwd}@{ip}:{port}{path}"
     elif username:
-        return f"rtsp://{username}@{ip}:{port}{path}"
+        return f"ffmpeg:rtsp://{username}@{ip}:{port}{path}"
     else:
-        return f"rtsp://{ip}:{port}{path}"
+        return f"ffmpeg:rtsp://{ip}:{port}{path}"
 
 
 def cameras_env_to_frigate_dict_and_restream(cameras_env):
