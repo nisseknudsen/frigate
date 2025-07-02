@@ -24,11 +24,23 @@ def write_frigate_config(config):
         yaml.safe_dump(config, f, sort_keys=False)
 
 
-def cameras_env_to_frigate_dict(cameras_env):
+def build_rtsp_url(ip, port, path, username=None, password=None):
+    if username and password:
+        return f"rtsp://{username}:{password}@{ip}:{port}{path}"
+    elif username:
+        return f"rtsp://{username}@{ip}:{port}{path}"
+    else:
+        return f"rtsp://{ip}:{port}{path}"
+
+
+def cameras_env_to_frigate_dict_and_restream(cameras_env):
     """
-    Convert the list of camera configs from env to Frigate config format.
+    Convert the list of camera configs from env to Frigate config format,
+    and build the restream config for go2rtc.
     """
     cameras = {}
+    restream = {}
+
     for cam in cameras_env:
         name = cam.get("camera_name") or cam.get("camera_ip")
         ip = cam["camera_ip"]
@@ -39,25 +51,27 @@ def cameras_env_to_frigate_dict(cameras_env):
         password = cam.get("camera_password")
         onvif_port = cam.get("onvif_port", None)
 
-        # Build RTSP URL
-        if username and password:
-            rtsp_url = f"rtsp://{username}:{password}@{ip}:{port}{path}"
-            rtsp_url_sub = f"rtsp://{username}:{password}@{ip}:{port}{sub_path}"
-        elif username:
-            rtsp_url = f"rtsp://{username}@{ip}:{port}{path}"
-            rtsp_url_sub = f"rtsp://{username}@{ip}:{port}{sub_path}"
+        # Build RTSP URLs
+        rtsp_url = build_rtsp_url(ip, port, path, username, password)
+        rtsp_url_sub = build_rtsp_url(ip, port, sub_path, username, password)
+
+        # Add to restream config
+        restream[name] = [rtsp_url]
+        if sub_path != path:
+            restream[f"{name}_sub"] = [rtsp_url_sub]
+
+        # Frigate ffmpeg input uses go2rtc restreamed RTSP
+        ffmpeg_inputs = [{"path": f"rtsp://localhost:8554/{name}", "roles": ["record"]}]
+        if sub_path != path:
+            ffmpeg_inputs.append({"path": f"rtsp://localhost:8554/{name}_sub", "roles": ["detect"]})
         else:
-            rtsp_url = f"rtsp://{ip}:{port}{path}"
-            rtsp_url_sub = f"rtsp://{ip}:{port}{sub_path}"
+            ffmpeg_inputs.append({"path": f"rtsp://localhost:8554/{name}", "roles": ["detect"]})
 
         cameras[name] = {
             "enabled": True,
             "ffmpeg": {
                 "hwaccel_args": "preset-vaapi",
-                "inputs": [
-                    {"path": rtsp_url, "roles": ["record"]},
-                    {"path": rtsp_url_sub, "roles": ["detect"]},
-                ],
+                "inputs": ffmpeg_inputs,
             },
             "detect": {"enabled": False},
             "record": {"enabled": True, "retain": {"days": 7}},
@@ -70,7 +84,7 @@ def cameras_env_to_frigate_dict(cameras_env):
                 "user": username,
                 "password": password,
             }
-    return cameras
+    return cameras, restream
 
 
 def main():
@@ -79,10 +93,12 @@ def main():
     application_config = make87.config.load_config_from_env()
     cameras_env = application_config.config.get("cameras", [])
     try:
-        new_camera_dict = cameras_env_to_frigate_dict(cameras_env)
+        new_camera_dict, restream_dict = cameras_env_to_frigate_dict_and_restream(cameras_env)
         config["cameras"] = new_camera_dict
+        config["go2rtc"] = {}
+        config["go2rtc"]["streams"] = restream_dict
         write_frigate_config(config)
-        logger.info("[Frigate] Cameras changed, config updated.")
+        logger.info("[Frigate] Cameras and restream config updated.")
     except Exception as e:
         logger.error(f"[Frigate] Error in main loop: {e}")
         raise Exception("There was a problem with configuring the cameras or writing the config.yaml.")
