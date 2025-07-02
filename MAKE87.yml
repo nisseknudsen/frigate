@@ -85,4 +85,8 @@ build:
   custom:
     dockerfile: docker/main/Dockerfile
     platforms: ["linux/amd64"]
+dev_build:
+  build_kit:
+    name: python3
+    platforms: ["linux/amd64"]
 
