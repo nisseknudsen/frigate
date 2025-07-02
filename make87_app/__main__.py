@@ -6,11 +6,17 @@ import make87
 logger = logging.getLogger(__name__)
 
 FRIGATE_CONFIG_PATH = "/config/config.yaml"
+FRIGATE_DEFAULT_CONFIG_PATH = "/opt/frigate/config_template/config.yaml"
 
 
 def load_frigate_config():
-    with open(FRIGATE_CONFIG_PATH, "r") as f:
-        return yaml.safe_load(f)
+    try:
+        with open(FRIGATE_CONFIG_PATH, "r") as f:
+            return yaml.safe_load(f)
+    except FileNotFoundError:
+        logger.warning(f"[Frigate] Config file not found at {FRIGATE_CONFIG_PATH}, using default template.")
+        with open(FRIGATE_DEFAULT_CONFIG_PATH, "r") as f:
+            return yaml.safe_load(f)
 
 
 def write_frigate_config(config):
@@ -58,23 +64,13 @@ def cameras_env_to_frigate_dict(cameras_env):
 
 
 def main():
+    config = load_frigate_config()
+
     application_config = make87.config.load_config_from_env()
-
+    cameras_env = application_config.config.get("cameras", [])
     try:
-        cameras_env = application_config.config.get("cameras", [])
         new_camera_dict = cameras_env_to_frigate_dict(cameras_env)
-
-        try:
-            config = load_frigate_config()
-        except FileNotFoundError:
-            config = {}
-
-        # Update config
         config["cameras"] = new_camera_dict
-
-        if "mqtt" not in config:
-            config["mqtt"] = {"enabled": False}
-
         write_frigate_config(config)
         logger.info("[Frigate] Cameras changed, config updated.")
     except Exception as e:
