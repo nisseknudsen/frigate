@@ -5,7 +5,7 @@ interfaces:
     servers:
       - name: frigate_web
         spec:
-          string: frigate:15.1
+          string: frigate:15
         port:
           name: frigate_web
           protocol: HTTP
@@ -13,18 +13,11 @@ interfaces:
           is_system_interface: true
       - name: frigate_api
         spec:
-          string: frigate_api:15.1
+          string: frigate_api:15
         port:
           name: frigate_api
           protocol: HTTP
           target_port: 5000
-      - name: mediamtx_api  # used to list all available cameras in mediamtx format
-        spec:
-          string: mediamtx_api:1.0  # copy of OpenAPI spec in schema/swagger.json
-        port:
-          name: mediamtx_api
-          protocol: HTTP
-          target_port: 9997
       - name: restream_rtsp
         spec:
           string: rtsp  # no specific spec, just a placeholder for RTSP connections
