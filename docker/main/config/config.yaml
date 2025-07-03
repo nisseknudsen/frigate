@@ -4,15 +4,17 @@ tls:
   enabled: false
 auth:
   enabled: false
+ffmpeg:
+  path: "5.0"
 go2rtc:
   streams:
-    dummy_camera:
-      - rtsp://127.0.0.1:554/rtsp
-    dummy_camera_sub:
-     - rtsp://127.0.0.1:554/rtsp_sub
+    dummy_camera: rtsp://127.0.0.1:554/rtsp
+    dummy_camera_sub: rtsp://127.0.0.1:554/rtsp_sub
 cameras:
   dummy_camera:
     enabled: false
+    live:
+      stream_name: dummy_camera_sub
     ffmpeg:
       hwaccel_args: preset-vaapi
       inputs:

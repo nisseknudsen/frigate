@@ -3,6 +3,7 @@ import yaml
 import urllib.parse
 
 import make87
+from make87.interfaces.base import GenericInterface
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +69,7 @@ def cameras_env_to_frigate_dict_and_restream(cameras_env):
                     "roles": ["record", "detect"],
                 }
             )
+            live_stream_name = name
         else:
             restream[name] = rtsp_url
             restream[f"{name}_sub"] = rtsp_url_sub
@@ -77,9 +79,11 @@ def cameras_env_to_frigate_dict_and_restream(cameras_env):
             ffmpeg_inputs.append(
                 {"path": f"rtsp://localhost:8554/{name}_sub", "input_args": "preset-rtsp-restream", "roles": ["detect"]}
             )
+            live_stream_name = f"{name}_sub"
 
         cameras[name] = {
             "enabled": True,
+            "live": {"stream_name": live_stream_name},
             "ffmpeg": {
                 "hwaccel_args": "preset-vaapi",
                 "inputs": ffmpeg_inputs,
@@ -99,21 +103,21 @@ def cameras_env_to_frigate_dict_and_restream(cameras_env):
 
 
 def main():
-    ...
-    # config = load_frigate_config()
-    #
-    # application_config = make87.config.load_config_from_env()
-    # cameras_env = application_config.config.get("cameras", [])
-    # try:
-    #     new_camera_dict, restream_dict = cameras_env_to_frigate_dict_and_restream(cameras_env)
-    #     config["cameras"] = new_camera_dict
-    #     config["go2rtc"] = {}
-    #     config["go2rtc"]["streams"] = restream_dict
-    #     write_frigate_config(config)
-    #     logger.info("[Frigate] Cameras and restream config updated.")
-    # except Exception as e:
-    #     logger.error(f"[Frigate] Error in main loop: {e}")
-    #     raise Exception("There was a problem with configuring the cameras or writing the config.yaml.")
+    config = load_frigate_config()
+
+    application_config = make87.config.load_config_from_env()
+    cameras_env = application_config.config.get("cameras", [])
+    try:
+        new_camera_dict, restream_dict = cameras_env_to_frigate_dict_and_restream(cameras_env)
+        config["cameras"] = new_camera_dict
+        config["go2rtc"] = {}
+        config["go2rtc"]["streams"] = restream_dict
+
+        write_frigate_config(config)
+        logger.info("[Frigate] Cameras and restream config updated.")
+    except Exception as e:
+        logger.error(f"[Frigate] Error in main loop: {e}")
+        raise Exception("There was a problem with configuring the cameras or writing the config.yaml.")
 
 
 if __name__ == "__main__":
