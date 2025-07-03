@@ -81,6 +81,8 @@ peripheral_requirements:
       type: GenericDevice
       path_prefix: "/dev/dri/renderD"
 container_config:
+  cap_add:
+    - CAP_PERFMON
   volumes:
     - frigate_storage:/media/frigate:rw
     - frigate_config:/config:rw
