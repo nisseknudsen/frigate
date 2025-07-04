@@ -18,6 +18,9 @@ interfaces:
           name: frigate_api
           protocol: HTTP
           target_port: 5000
+  - name: restream_rtsp
+    protocol: rtsp
+    servers:
       - name: restream_rtsp
         spec:
           string: rtsp  # no specific spec, just a placeholder for RTSP connections
