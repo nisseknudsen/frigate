@@ -4,8 +4,6 @@ tls:
   enabled: false
 auth:
   enabled: false
-ffmpeg:
-  path: "5.0"
 go2rtc:
   streams:
     dummy_camera: rtsp://127.0.0.1:554/rtsp
@@ -24,5 +22,5 @@ cameras:
         - path: rtsp://localhost:8554/dummy_camera_sub
           roles:
             - detect
-version: 0.15-1
+version: 0.15-2
 camera_groups: {}

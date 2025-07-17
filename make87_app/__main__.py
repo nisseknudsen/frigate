@@ -65,7 +65,6 @@ def cameras_env_to_frigate_dict_and_restream(cameras_env):
             ffmpeg_inputs.append(
                 {
                     "path": f"rtsp://localhost:8554/{name}",
-                    "input_args": "preset-rtsp-restream",
                     "roles": ["record", "detect"],
                 }
             )
@@ -74,10 +73,10 @@ def cameras_env_to_frigate_dict_and_restream(cameras_env):
             restream[name] = rtsp_url
             restream[f"{name}_sub"] = rtsp_url_sub
             ffmpeg_inputs.append(
-                {"path": f"rtsp://localhost:8554/{name}", "input_args": "preset-rtsp-restream", "roles": ["record"]}
+                {"path": f"rtsp://localhost:8554/{name}", "roles": ["record"]}
             )
             ffmpeg_inputs.append(
-                {"path": f"rtsp://localhost:8554/{name}_sub", "input_args": "preset-rtsp-restream", "roles": ["detect"]}
+                {"path": f"rtsp://localhost:8554/{name}_sub", "roles": ["detect"]}
             )
             live_stream_name = f"{name}_sub"
 
@@ -110,7 +109,8 @@ def main():
     try:
         new_camera_dict, restream_dict = cameras_env_to_frigate_dict_and_restream(cameras_env)
         config["cameras"] = new_camera_dict
-        config["go2rtc"] = {}
+        if "go2rtc" not in config:  # keep any other existing go2rtc config
+            config["go2rtc"] = {}
         config["go2rtc"]["streams"] = restream_dict
 
         write_frigate_config(config)
