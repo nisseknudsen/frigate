@@ -83,6 +83,10 @@ container_config:
     - frigate_storage:/media/frigate:rw
     - frigate_config:/config:rw
     - /etc/localtime:/etc/localtime:ro
+    - type: tmpfs # Optional: 1GB of memory, reduces SSD/SD Card wear
+      target: /tmp/cache
+      tmpfs:
+        size: 1000000000
 build:
   custom:
     dockerfile: docker/main/Dockerfile
