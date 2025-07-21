@@ -76,6 +76,14 @@ peripheral_requirements:
     constraints:
       type: GenericDevice
       path_prefix: "/dev/dri/renderD"
+build:
+  custom:
+    dockerfile: docker/main/Dockerfile
+    platforms: ["linux/amd64"]
+dev_build:
+  build_kit:
+    name: python3
+    platforms: ["linux/amd64"]
 container_config:
   cap_add:
     - CAP_PERFMON
@@ -87,12 +95,4 @@ container_config:
       target: /tmp/cache
       tmpfs:
         size: 1000000000
-build:
-  custom:
-    dockerfile: docker/main/Dockerfile
-    platforms: ["linux/amd64"]
-dev_build:
-  build_kit:
-    name: python3
-    platforms: ["linux/amd64"]
 
