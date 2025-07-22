@@ -91,7 +91,7 @@ dev_build:
     platforms: ["linux/amd64"]
 container_config:
   cap_add:
-    - CAP_PERFMON
+    - PERFMON
   volumes:
     - frigate_storage:/media/frigate:rw
     - frigate_config:/config:rw
