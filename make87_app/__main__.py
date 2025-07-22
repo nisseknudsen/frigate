@@ -19,6 +19,10 @@ def load_frigate_config():
         logger.warning(f"[Frigate] Config file not found at {FRIGATE_CONFIG_PATH}, using default template.")
         with open(FRIGATE_DEFAULT_CONFIG_PATH, "r") as f:
             return yaml.safe_load(f)
+    except Exception as e:
+        logger.warning(f"[Frigate] Config file loading at {FRIGATE_CONFIG_PATH} failed with {e}, using default template.")
+        with open(FRIGATE_DEFAULT_CONFIG_PATH, "r") as f:
+            return yaml.safe_load(f)
 
 
 def write_frigate_config(config):
