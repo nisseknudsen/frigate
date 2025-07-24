@@ -17,7 +17,8 @@ def load_frigate_config():
             if config is None:
                 logger.warning(f"[Frigate] Config file at {FRIGATE_CONFIG_PATH} is empty, using default template.")
                 with open(FRIGATE_DEFAULT_CONFIG_PATH, "r") as default_f:
-                    return yaml.safe_load(default_f)
+                    config = yaml.safe_load(default_f)
+            return config
     except FileNotFoundError:
         logger.warning(f"[Frigate] Config file not found at {FRIGATE_CONFIG_PATH}, using default template.")
         with open(FRIGATE_DEFAULT_CONFIG_PATH, "r") as f:
