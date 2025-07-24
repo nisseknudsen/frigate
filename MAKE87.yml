@@ -31,6 +31,10 @@ interfaces:
 config:
   type: object
   properties:
+    retention:
+      type: number
+      description: Number of days data is recorded before being freed up (or before disk is full)
+      default: 7
     cameras:
       type: array
       items:
@@ -70,6 +74,7 @@ config:
           - camera_ip
   required:
     - cameras
+    - retention
 peripheral_requirements:
   - name: RENDER
     peripheral_type: GenericDevice

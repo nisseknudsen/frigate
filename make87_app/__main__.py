@@ -3,7 +3,6 @@ import yaml
 import urllib.parse
 
 import make87
-from make87.interfaces.base import GenericInterface
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +39,7 @@ def build_rtsp_url(ip, port, path, username=None, password=None, encode_password
         return f"ffmpeg:rtsp://{ip}:{port}{path}"
 
 
-def cameras_env_to_frigate_dict_and_restream(cameras_env):
+def cameras_env_to_frigate_dict_and_restream(cameras_env, retention_days=7):
     """
     Convert the list of camera configs from env to Frigate config format,
     and build the restream config for go2rtc.
@@ -92,7 +91,7 @@ def cameras_env_to_frigate_dict_and_restream(cameras_env):
                 "inputs": ffmpeg_inputs,
             },
             "detect": {"enabled": False},
-            "record": {"enabled": True, "retain": {"days": 7}},
+            "record": {"enabled": True, "retain": {"days": retention_days}},
         }
 
         if onvif_port is not None:
@@ -110,8 +109,9 @@ def main():
 
     application_config = make87.config.load_config_from_env()
     cameras_env = application_config.config.get("cameras", [])
+    retention_days = application_config.config.get("retention", 7)
     try:
-        new_camera_dict, restream_dict = cameras_env_to_frigate_dict_and_restream(cameras_env)
+        new_camera_dict, restream_dict = cameras_env_to_frigate_dict_and_restream(cameras_env, retention_days=retention_days)
         config["cameras"] = new_camera_dict
         if "go2rtc" not in config:  # keep any other existing go2rtc config
             config["go2rtc"] = {}
