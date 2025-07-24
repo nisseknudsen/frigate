@@ -13,16 +13,15 @@ FRIGATE_DEFAULT_CONFIG_PATH = "/opt/frigate/config_template/config.yaml"
 def load_frigate_config():
     try:
         with open(FRIGATE_CONFIG_PATH, "r") as f:
-            return yaml.safe_load(f)
+            config = yaml.safe_load(f)
+            if config is None:
+                logger.warning(f"[Frigate] Config file at {FRIGATE_CONFIG_PATH} is empty, using default template.")
+                with open(FRIGATE_DEFAULT_CONFIG_PATH, "r") as default_f:
+                    return yaml.safe_load(default_f)
     except FileNotFoundError:
         logger.warning(f"[Frigate] Config file not found at {FRIGATE_CONFIG_PATH}, using default template.")
         with open(FRIGATE_DEFAULT_CONFIG_PATH, "r") as f:
             return yaml.safe_load(f)
-    except Exception as e:
-        logger.warning(f"[Frigate] Config file loading at {FRIGATE_CONFIG_PATH} failed with {e}, using default template.")
-        with open(FRIGATE_DEFAULT_CONFIG_PATH, "r") as f:
-            return yaml.safe_load(f)
-
 
 def write_frigate_config(config):
     with open(FRIGATE_CONFIG_PATH, "w") as f:
